@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <title>✈️ Авианосец</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #0a0a1a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            color: white;
+            padding: 10px;
+            touch-action: manipulation;
+        }
+        .game-container {
+            background: #0f1a2e;
+            border-radius: 16px;
+            padding: 15px;
+            max-width: 420px;
+            width: 100%;
+            border: 1px solid rgba(100,200,255,0.15);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+        }
+        .header { text-align: center; padding: 8px; border-bottom: 1px solid rgba(100,200,255,0.1); margin-bottom: 10px; }
+        .header h1 { font-size: 22px; color: #00d4ff; }
+        .balance {
+            background: rgba(0,255,100,0.08);
+            border: 1px solid rgba(0,255,100,0.15);
+            border-radius: 8px;
+            padding: 4px 14px;
+            display: inline-block;
+            margin-top: 4px;
+        }
+        .balance span { color: #00ff88; font-size: 18px; font-weight: bold; }
+
+        .bet-control {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            margin: 8px 0;
+            flex-wrap: wrap;
+        }
+        .bet-control label { font-size: 13px; color: #8899bb; }
+        .bet-display { font-size: 20px; font-weight: bold; color: #ffcc00; min-width: 55px; text-align: center; }
+        .bet-btn {
+            background: rgba(255,200,0,0.1);
+            border: 1px solid rgba(255,200,0,0.2);
+            color: #ffcc00;
+            padding: 4px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: bold;
+            transition: 0.15s;
+        }
+        .bet-btn:hover { background: rgba(255,200,0,0.2); }
+        .bet-btn:active { transform: scale(0.92); }
+
+        .canvas-wrapper {
+            background: linear-gradient(180deg, #0a0a2e 0%, #1a2a5a 50%, #2a5a8a 75%, #1a3a5c 100%);
+            border-radius: 12px;
+            overflow: hidden;
+            margin: 8px 0;
+            border: 1px solid rgba(100,200,255,0.15);
+            position: relative;
+        }
+        canvas {
+            display: block;
+            width: 100%;
+            height: 360px;
+            background: transparent;
+            touch-action: none;
+        }
+
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 6px;
+            background: rgba(0,0,0,0.25);
+            border-radius: 8px;
+            margin: 8px 0;
+            flex-wrap: wrap;
+            gap: 2px;
+        }
+        .game-info .info-item { text-align: center; flex: 1; min-width: 50px; }
+        .game-info .info-item .label { font-size: 9px; color: #667799; text-transform: uppercase; }
+        .game-info .info-item .value { font-size: 15px; font-weight: bold; }
+        .game-info .info-item .value.green { color: #00ff88; }
+        .game-info .info-item .value.yellow { color: #ffcc00; }
+        .game-info .info-item .value.red { color: #ff4455; }
+
+        .controls {
+            display: flex;
+            gap: 8px;
+            margin: 8px 0;
+        }
+        .controls button {
+            flex: 1;
+            padding: 12px 16px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.15s;
+        }
+        .controls button:active { transform: scale(0.94); }
+        .controls button:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+        .btn-takeoff {
+            background: linear-gradient(135deg, #00b894, #00a86b);
+            color: white;
+            box-shadow: 0 3px 15px rgba(0,200,100,0.2);
+        }
+
+        .message {
+            text-align: center;
+            padding: 8px 12px;
+            border-radius: 8px;
+            margin: 8px 0;
+            font-weight: bold;
+            font-size: 14px;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .message.success { background: rgba(0,255,100,0.12); color: #00ff88; }
+        .message.danger { background: rgba(255,50,50,0.12); color: #ff4455; }
+        .message.info { background: rgba(100,200,255,0.08); color: #66d9ff; }
+        .message.warning { background: rgba(255,200,0,0.08); color: #ffcc00; }
+
+        .history {
+            max-height: 80px;
+            overflow-y: auto;
+            margin-top: 6px;
+            padding: 6px 10px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+            font-size: 11px;
+        }
+        .history-item { padding: 2px 0; border-bottom: 1px solid rgba(255,255,255,0.04); display: flex; justify-content: space-between; }
+        .history-item .win { color: #00ff88; }
+        .history-item .lose { color: #ff4455; }
+        .reset-btn {
+            background: rgba(255,50,50,0.08);
+            border: 1px solid rgba(255,50,50,0.15);
+            color: #ff4455;
+            padding: 4px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 11px;
+            margin-top: 4px;
+        }
+        .reset-btn:hover { background: rgba(255,50,50,0.15); }
+
+        @media (max-width: 450px) {
+            .game-container { padding: 10px; }
+            canvas { height: 280px; }
+            .game-info .info-item .value { font-size: 13px; }
+            .controls button { padding: 10px 12px; font-size: 14px; }
+        }
+        ::-webkit-scrollbar { width: 3px; }
+        ::-webkit-scrollbar-thumb { background: rgba(100,200,255,0.2); border-radius: 2px; }
+    </style>
+</head>
+<body>
+<div class="game-container">
+    <div class="header">
+        <h1>✈️ АВИАНОСЕЦ</h1>
+        <div class="balance">💰 <span id="balanceDisplay">10.00</span>$</div>
+    </div>
+
+    <div class="bet-control">
+        <label>Ставка:</label>
+        <button class="bet-btn" onclick="changeBet(-0.25)">−</button>
+        <span class="bet-display" id="betDisplay">0.25</span>
+        <button class="bet-btn" onclick="changeBet(0.25)">+</button>
+        <button class="bet-btn" onclick="setBet(0.5)">0.5</button>
+        <button class="bet-btn" onclick="setBet(1)">1</button>
+        <button class="bet-btn" onclick="setBet(2)">2</button>
+        <button class="bet-btn" onclick="setBet(5)">5</button>
+        <button class="bet-btn" onclick="setBet(10)">10</button>
+    </div>
+
+    <div class="canvas-wrapper">
+        <canvas id="gameCanvas" width="400" height="360"></canvas>
+    </div>
+
+    <div class="game-info">
+        <div class="info-item"><div class="label">Множитель</div><div class="value yellow" id="multiplierDisplay">1.00x</div></div>
+        <div class="info-item"><div class="label">Высота</div><div class="value" id="altitudeDisplay">0м</div></div>
+        <div class="info-item"><div class="label">Время</div><div class="value" id="timeDisplay">0с</div></div>
+        <div class="info-item"><div class="label">Потенц. выигрыш</div><div class="value green" id="potentialWin">0.00$</div></div>
+    </div>
+
+    <div class="controls">
+        <button class="btn-takeoff" id="takeoffBtn" onclick="takeoff()">✈️ ВЗЛЕТ</button>
+    </div>
+
+    <div class="message info" id="messageDisplay">🎯 Нажми ВЗЛЕТ!</div>
+    <div class="history" id="historyDisplay"><div style="color:#556688; text-align:center; font-size:11px;">📋 История игр</div></div>
+    <button class="reset-btn" onclick="resetGame()">🔄 Сбросить прогресс</button>
+</div>
+
+<script>
+// ============================================================
+//  ✈️ АВИАНОСЕЦ — ИСПРАВЛЕННАЯ ВЕРСИЯ
+//  • Фон ДВИЖЕТСЯ (облака, авианосцы приближаются)
+//  • Самолёт садится БЫСТРО (через 3-4 секунды)
+//  • Всё видно и понятно!
+// ============================================================
+
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+const W = 400, H = 360;
+canvas.width = W; canvas.height = H;
+
+// ---------- СОСТОЯНИЕ ----------
+let game = {
+    balance: 10.0,
+    bet: 0.25,
+    multiplier: 1.0,
+    altitude: 0,
+    speed: 0,
+    maxAltitude: 0,
+    flightTime: 0,
+    isFlying: false,
+    gameOver: false,
+    planeX: 30,
+    planeY: 300,
+    trail: [],
+    events: [],
+    history: [],
+    explosionParticles: [],
+    clouds: [],
+    stars: [],
+    carriers: [],
+    animId: null,
+    lastTime: 0,
+    isCrashed: false,
+    winAmount: 0,
+    resultShown: false,
+    landingPhase: false,
+    landingProgress: 0,
+    finalResult: null,
+    carrierIndex: 0,
+    // ДЛЯ ДВИЖЕНИЯ ФОНА
+    bgOffset: 0,
+    cloudSpeed: 0.3,
+    carrierSpeed: 0.5
+};
+
+// ---------- ИНИЦИАЛИЗАЦИЯ ----------
+function init() {
+    loadBalance();
+    createClouds();
+    createStars();
+    createCarriers();
+    updateDisplay();
+    updateHistory();
+    showMessage('🎯 Нажми ВЗЛЕТ!', 'info');
+    gameLoop();
+}
+
+function saveBalance() {
+    try {
+        localStorage.setItem('avia_balance', game.balance);
+        localStorage.setItem('avia_history', JSON.stringify(game.history));
+    } catch(e) {}
+}
+
+function loadBalance() {
+    try {
+        const saved = localStorage.getItem('avia_balance');
+        if (saved !== null) game.balance = parseFloat(saved);
+        const history = localStorage.getItem('avia_history');
+        if (history !== null) game.history = JSON.parse(history);
+    } catch(e) {}
+}
+
+function createClouds() {
+    game.clouds = [];
+    for (let i = 0; i < 8; i++) {
+        game.clouds.push({
+            x: Math.random() * 600 - 100,
+            y: 20 + Math.random() * 130,
+            w: 30 + Math.random() * 60,
+            speed: 0.3 + Math.random() * 0.5
+        });
+    }
+}
+
+function createStars() {
+    game.stars = [];
+    for (let i = 0; i < 30; i++) {
+        game.stars.push({
+            x: Math.random() * W,
+            y: Math.random() * 140,
+            size: 0.5 + Math.random() * 1.2,
+            twinkle: Math.random() * 6.28
+        });
+    }
+}
+
+function createCarriers() {
+    game.carriers = [];
+    // Авианосцы появляются на разных позициях
+    for (let i = 0; i < 4; i++) {
+        game.carriers.push({
+            x: 200 + i * 70 + Math.random() * 30,
+            y: 332,
+            width: 50 + Math.random() * 10,
+            passed: false,
+            startX: 200 + i * 70 + Math.random() * 30
+        });
+    }
+    game.carrierIndex = 0;
+}
+
+// ---------- СТАВКИ ----------
+function changeBet(amount) {
+    if (game.isFlying) { showMessage('⚠️ Нельзя менять ставку в полёте!', 'warning'); return; }
+    let newBet = game.bet + amount;
+    newBet = Math.round(newBet * 100) / 100;
+    if (newBet < 0.25) newBet = 0.25;
+    if (newBet > game.balance) newBet = game.balance;
+    if (newBet < 0.25) newBet = 0.25;
+    game.bet = newBet;
+    updateDisplay();
+}
+
+function setBet(amount) {
+    if (game.isFlying) { showMessage('⚠️ Нельзя менять ставку в полёте!', 'warning'); return; }
+    if (amount > game.balance) amount = game.balance;
+    if (amount < 0.25) amount = 0.25;
+    game.bet = amount;
+    updateDisplay();
+}
+
+// ---------- ВЗЛЁТ ----------
+function takeoff() {
+    if (game.isFlying) return;
+    if (game.bet > game.balance) {
+        showMessage('⚠️ Недостаточно средств!', 'danger');
+        return;
+    }
+
+    game.balance -= game.bet;
+    game.multiplier = 1.0;
+    game.altitude = 0;
+    game.speed = 0;
+    game.maxAltitude = 0;
+    game.flightTime = 0;
+    game.isFlying = true;
+    game.gameOver = false;
+    game.isCrashed = false;
+    game.resultShown = false;
+    game.winAmount = 0;
+    game.landingPhase = false;
+    game.landingProgress = 0;
+    game.finalResult = null;
+    game.events = [];
+    game.trail = [];
+    game.explosionParticles = [];
+    game.planeX = 30;
+    game.planeY = 300;
+    game.bgOffset = 0;
+    createCarriers();
+
+    document.getElementById('takeoffBtn').disabled = true;
+
+    showMessage('✈️ ВЗЛЕТАЕМ!', 'success');
+    updateDisplay();
+}
+
+// ---------- СОБЫТИЯ ----------
+function triggerEvent() {
+    if (!game.isFlying || game.gameOver) return;
+    const type = Math.random() < 0.5 ? 'bomb' : 'booster';
+    game.events.push({ type, time: game.flightTime });
+
+    if (type === 'bomb') {
+        game.multiplier = Math.max(0.5, game.multiplier * 0.7);
+        game.speed = Math.max(2, game.speed * 0.8);
+        showMessage('💥 БОМБА! -30%', 'danger');
+        createExplosion(game.planeX, game.planeY - 20, '#ff4400', 15);
+    } else {
+        game.multiplier *= 1.3;
+        game.speed *= 1.2;
+        showMessage('🚀 БУСТЕР! +30%', 'success');
+        createExplosion(game.planeX, game.planeY - 20, '#00ff88', 10);
+    }
+    updateDisplay();
+}
+
+function createExplosion(x, y, color, count) {
+    for (let i = 0; i < count; i++) {
+        const angle = Math.random() * 6.28;
+        const speed = 0.5 + Math.random() * 3;
+        game.explosionParticles.push({
+            x, y,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed - 0.5,
+            life: 20 + Math.random() * 25,
+            maxLife: 45,
+            size: 1.5 + Math.random() * 4,
+            color: color
+        });
+    }
+}
+
+// ---------- АВТОМАТИЧЕСКАЯ ПОСАДКА (БЫСТРО!) ----------
+function autoLand() {
+    if (game.landingPhase || game.gameOver) return;
+    game.landingPhase = true;
+    showMessage('🔄 ЗАХОД НА ПОСАДКУ!', 'warning');
+}
+
+// ---------- ФИНАЛЬНЫЙ РЕЗУЛЬТАТ ----------
+function finishGame(result) {
+    if (game.resultShown) return;
+    game.resultShown = true;
+    game.gameOver = true;
+    game.isFlying = false;
+    game.finalResult = result;
+
+    const baseWin = game.bet * game.multiplier;
+
+    if (result === 'win') {
+        game.balance += baseWin;
+        showMessage(`🛬 УСПЕШНАЯ ПОСАДКА! +${baseWin.toFixed(2)}$`, 'success');
+        createExplosion(game.planeX, game.planeY + 15, '#00ff88', 25);
+        game.history.unshift({ bet: game.bet, multiplier: game.multiplier, win: baseWin, status: 'win' });
+    } else if (result === 'half') {
+        const halfWin = baseWin / 2;
+        game.balance += halfWin;
+        showMessage(`💥 АВАРИЙНАЯ ПОСАДКА! +${halfWin.toFixed(2)}$`, 'warning');
+        createExplosion(game.planeX, game.planeY, '#ff8800', 30);
+        game.history.unshift({ bet: game.bet, multiplier: game.multiplier, win: halfWin, status: 'half' });
+    } else {
+        game.isCrashed = true;
+        showMessage('💧 КРУШЕНИЕ! Всё потеряно!', 'danger');
+        createExplosion(game.planeX, game.planeY, '#ff4400', 40);
+        game.history.unshift({ bet: game.bet, multiplier: game.multiplier, win: 0, status: 'crash' });
+    }
+
+    if (game.history.length > 50) game.history.pop();
+    document.getElementById('takeoffBtn').disabled = false;
+    saveBalance();
+    updateDisplay();
+    updateHistory();
+}
+
+// ---------- ОБНОВЛЕНИЕ ДИСПЛЕЯ ----------
+function updateDisplay() {
+    document.getElementById('balanceDisplay').textContent = game.balance.toFixed(2);
+    document.getElementById('betDisplay').textContent = game.bet.toFixed(2);
+    document.getElementById('multiplierDisplay').textContent = game.multiplier.toFixed(2) + 'x';
+    document.getElementById('altitudeDisplay').textContent = Math.round(game.altitude) + 'м';
+    document.getElementById('timeDisplay').textContent = game.flightTime.toFixed(1) + 'с';
+    document.getElementById('potentialWin').textContent = (game.bet * game.multiplier).toFixed(2) + '$';
+}
+
+function updateHistory() {
+    const container = document.getElementById('historyDisplay');
+    if (game.history.length === 0) {
+        container.innerHTML = '<div style="color:#556688; text-align:center; font-size:11px;">📋 История игр</div>';
+        return;
+    }
+    let html = '<div style="color:#667799; font-size:10px; margin-bottom:4px;">📋 Последние игры:</div>';
+    game.history.slice(0, 10).forEach(h => {
+        const icon = h.status === 'win' ? '✅' : h.status === 'half' ? '⚠️' : '💧';
+        const cls = h.status === 'win' ? 'win' : 'lose';
+        html += `<div class="history-item"><span>${icon} ${h.bet.toFixed(2)}$ × ${h.multiplier.toFixed(2)}x</span><span class="${cls}">${h.win > 0 ? '+' : ''}${h.win.toFixed(2)}$</span></div>`;
+    });
+    container.innerHTML = html;
+}
+
+function showMessage(text, type = 'info') {
+    const el = document.getElementById('messageDisplay');
+    el.textContent = text;
+    el.className = 'message ' + type;
+}
+
+function resetGame() {
+    if (game.isFlying) return;
+    if (confirm('Сбросить прогресс? Баланс станет 10$')) {
+        game.balance = 10;
+        game.history = [];
+        saveBalance();
+        updateDisplay();
+        updateHistory();
+        showMessage('🔄 Прогресс сброшен!', 'info');
+    }
+}
+
+// ============================================================
+//  🎨 РИСОВАНИЕ
+// ============================================================
+
+function draw() {
+    ctx.clearRect(0, 0, W, H);
+
+    // Небо
+    const grad = ctx.createLinearGradient(0, 0, 0, H);
+    grad.addColorStop(0, '#05051a');
+    grad.addColorStop(0.3, '#0a1a3a');
+    grad.addColorStop(0.55, '#1a3a6a');
+    grad.addColorStop(0.75, '#3a7a9a');
+    grad.addColorStop(0.92, '#5a9aba');
+    grad.addColorStop(1, '#1a3a5c');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+
+    // Звёзды
+    game.stars.forEach(s => {
+        s.twinkle += 0.03;
+        ctx.globalAlpha = 0.3 + 0.7 * Math.abs(Math.sin(s.twinkle));
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.size, 0, 6.28);
+        ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+
+    // Облака (двигаются!)
+    game.clouds.forEach(c => {
+        if (game.isFlying && !game.gameOver) {
+            c.x -= c.speed * 0.8;
+            if (c.x < -100) c.x = W + 80;
+        } else {
+            c.x -= c.speed * 0.1;
+            if (c.x < -100) c.x = W + 80;
+        }
+        ctx.fillStyle = 'rgba(255,255,255,0.06)';
+        ctx.beginPath();
+        ctx.ellipse(c.x, c.y, c.w/2, c.w/4, 0, 0, 6.28);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(c.x - c.w/3, c.y + 8, c.w/3.5, c.w/5, 0, 0, 6.28);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(c.x + c.w/3, c.y + 6, c.w/3.8, c.w/4.8, 0, 0, 6.28);
+        ctx.fill();
+    });
+
+    // Вода (с волнами)
+    ctx.fillStyle = '#0a1a3a';
+    ctx.fillRect(0, 320, W, 40);
+    for (let i = 0; i < 15; i++) {
+        const x = (i * 30 + performance.now() * 0.015 + game.bgOffset * 0.5) % 450 - 50;
+        const y = 326 + Math.sin(i * 1.3 + performance.now() * 0.004) * 3;
+        ctx.fillStyle = 'rgba(60, 140, 200, 0.12)';
+        ctx.fillRect(x, y, 25, 1.5);
+    }
+
+    // Авианосцы (приближаются!)
+    game.carriers.forEach(c => {
+        if (game.isFlying && !game.gameOver) {
+            c.x -= game.carrierSpeed * 1.2;
+        }
+        if (c.x < -80) {
+            c.x = W + 50 + Math.random() * 80;
+            c.width = 45 + Math.random() * 15;
+        }
+
+        ctx.fillStyle = '#1a2a3a';
+        ctx.fillRect(c.x - c.width/2, c.y - 4, c.width, 12);
+        ctx.fillRect(c.x - c.width/3, c.y - 10, c.width*0.66, 6);
+        ctx.fillStyle = '#2a3a4a';
+        ctx.fillRect(c.x - c.width/2.5, c.y - 5, c.width*0.8, 4);
+        ctx.fillStyle = '#ff3333';
+        ctx.beginPath();
+        ctx.arc(c.x - c.width/2.5, c.y - 8, 2, 0, 6.28);
+        ctx.fill();
+        ctx.fillStyle = '#33ff33';
+        ctx.beginPath();
+        ctx.arc(c.x + c.width/2.5, c.y - 8, 2, 0, 6.28);
+        ctx.fill();
+        ctx.fillStyle = '#2a3a4a';
+        ctx.fillRect(c.x + c.width/3, c.y - 20, 4, 16);
+        ctx.fillStyle = '#3a4a5a';
+        ctx.fillRect(c.x + c.width/3 - 3, c.y - 20, 10, 3);
+        ctx.fillRect(c.x + c.width/3 - 3, c.y - 13, 10, 3);
+    });
+
+    // След
+    game.trail.forEach((p, i) => {
+        ctx.globalAlpha = (i / game.trail.length) * 0.3;
+        ctx.fillStyle = '#88ddff';
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 1.5 * (i / game.trail.length), 0, 6.28);
+        ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+    if (game.trail.length > 40) game.trail.shift();
+
+    // Самолёт
+    const px = game.planeX, py = game.planeY;
+    ctx.fillStyle = 'rgba(0,0,0,0.15)';
+    ctx.beginPath();
+    ctx.ellipse(px + 3, py + 8, 12, 4, 0, 0, 6.28);
+    ctx.fill();
+
+    ctx.fillStyle = '#e0e8f0';
+    ctx.fillRect(px - 12, py - 2, 24, 4);
+    ctx.fillStyle = '#66ccff';
+    ctx.fillRect(px + 4, py - 4, 6, 3);
+    ctx.fillStyle = '#44aadd';
+    ctx.fillRect(px + 5, py - 5, 3, 2);
+    ctx.fillStyle = '#c8d0d8';
+    ctx.fillRect(px - 6, py - 9, 12, 2.5);
+    ctx.fillRect(px - 6, py + 6.5, 12, 2.5);
+    ctx.fillRect(px - 15, py - 6, 4, 12);
+    ctx.fillStyle = '#ff6633';
+    ctx.fillRect(px - 16, py - 1, 5, 2);
+    if (game.isFlying && !game.gameOver) {
+        ctx.fillStyle = '#ff4400';
+        ctx.fillRect(px - 20, py - 1.5, 4, 3);
+        ctx.fillStyle = 'rgba(255, 80, 0, 0.2)';
+        ctx.fillRect(px - 24, py - 3, 6, 6);
+    }
+
+    // Взрывы
+    game.explosionParticles = game.explosionParticles.filter(p => p.life > 0);
+    game.explosionParticles.forEach(p => {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.04;
+        p.life--;
+        ctx.globalAlpha = p.life / p.maxLife;
+        ctx.fillStyle = p.color;
+        const s = p.size * (p.life / p.maxLife);
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, Math.max(0.5, s), 0, 6.28);
+        ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+
+    // Инфо на экране
+    if (game.isFlying && !game.gameOver) {
+        ctx.fillStyle = 'rgba(0,0,0,0.5)';
+        ctx.roundRect(6, 6, 130, 44, 6);
+        ctx.fill();
+        ctx.fillStyle = '#88ddff';
+        ctx.font = '10px Arial';
+        ctx.fillText('✈️ В ПОЛЁТЕ', 12, 22);
+        ctx.fillText(`⏱ ${game.flightTime.toFixed(1)}с  ×${game.multiplier.toFixed(2)}`, 12, 42);
+
+        if (game.landingPhase) {
+            ctx.fillStyle = 'rgba(255,200,0,0.2)';
+            ctx.roundRect(W/2 - 60, 8, 120, 22, 8);
+            ctx.fill();
+            ctx.fillStyle = '#ffcc00';
+            ctx.font = 'bold 12px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('🔄 ПОСАДКА', W/2, 24);
+            ctx.textAlign = 'left';
+        }
+    }
+
+    if (game.gameOver && !game.isFlying) {
+        ctx.fillStyle = 'rgba(0,0,0,0.35)';
+        ctx.fillRect(0, 0, W, H);
+
+        ctx.font = 'bold 24px Arial';
+        ctx.textAlign = 'center';
+        if (game.finalResult === 'win') {
+            ctx.fillStyle = '#00ff88';
+            ctx.fillText('✅ УСПЕХ!', W/2, H/2 - 10);
+            ctx.font = '16px Arial';
+            ctx.fillStyle = '#88dd88';
+            ctx.fillText(`+${(game.bet * game.multiplier).toFixed(2)}$`, W/2, H/2 + 30);
+        } else if (game.finalResult === 'half') {
+            ctx.fillStyle = '#ffcc00';
+            ctx.fillText('⚠️ АВАРИЯ', W/2, H/2 - 10);
+            ctx.font = '16px Arial';
+            ctx.fillStyle = '#ffcc88';
+            ctx.fillText(`+${(game.bet * game.multiplier / 2).toFixed(2)}$`, W/2, H/2 + 30);
+        } else {
+            ctx.fillStyle = '#ff4455';
+            ctx.fillText('💧 КРУШЕНИЕ', W/2, H/2 - 10);
+            ctx.font = '16px Arial';
+            ctx.fillStyle = '#ff8888';
+            ctx.fillText(`-${game.bet.toFixed(2)}$`, W/2, H/2 + 30);
+        }
+        ctx.textAlign = 'left';
+    }
+}
+
+// ============================================================
+//  🎮 ИГРОВОЙ ЦИКЛ (БЫСТРАЯ ПОСАДКА!)
+// ============================================================
+
+function gameLoop(timestamp) {
+    const delta = game.lastTime ? Math.min((timestamp - game.lastTime) / 1000, 0.05) : 0.016;
+    game.lastTime = timestamp;
+
+    if (game.isFlying && !game.gameOver) {
+        game.flightTime += delta;
+
+        // Рост множителя (быстрый!)
+        if (game.flightTime < 1.5) {
+            game.multiplier += delta * 0.15;
+        } else {
+            game.multiplier += delta * 0.3;
+        }
+
+        // Набор высоты
+        game.speed += delta * 2.5;
+        game.altitude += game.speed * delta * 8;
+        if (game.altitude > game.maxAltitude) game.maxAltitude = game.altitude;
+
+        // Движение самолёта (летит вперёд)
+        game.planeX += delta * (30 + game.speed * 1.8);
+        game.planeY = 300 - game.altitude * 0.2;
+        game.planeY = Math.max(20, Math.min(340, game.planeY));
+
+        // След
+        if (game.trail.length === 0 || Math.hypot(game.planeX - game.trail[game.trail.length-1].x,
+                                                   game.planeY - game.trail[game.trail.length-1].y) > 3) {
+            game.trail.push({x: game.planeX, y: game.planeY});
+        }
+
+        // События (редко)
+        if (Math.random() < 0.005 && game.flightTime > 1) {
+            triggerEvent();
+        }
+
+        // ---- БЫСТРАЯ АВТОМАТИЧЕСКАЯ ПОСАДКА! ----
+        // Через 3-4 секунды самолёт начинает снижаться
+        if (!game.landingPhase && game.flightTime > 2.5 + Math.random() * 1.5) {
+            autoLand();
+        }
+
+        if (game.landingPhase && !game.gameOver) {
+            // Снижение (быстрое!)
+            game.planeY += delta * (8 + game.speed * 2);
+            game.altitude = Math.max(0, (300 - game.planeY) / 0.2);
+
+            // Проверяем, есть ли авианосец рядом
+            let nearCarrier = false;
+            let carrierX = 0;
+            for (let c of game.carriers) {
+                if (Math.abs(game.planeX - c.x) < 50 && Math.abs(game.planeY - (c.y - 15)) < 35) {
+                    nearCarrier = true;
+                    carrierX = c.x;
+                    break;
+                }
+            }
+
+            // Если достиг уровня воды — результат!
+            if (game.planeY >= 335 || game.planeX > W + 30) {
+                if (!game.resultShown) {
+                    let result;
+                    if (nearCarrier) {
+                        // Шанс успеха
+                        let chance = 80 - game.altitude / 8 - game.speed * 1.5;
+                        chance += game.events.filter(e => e.type === 'booster').length * 6;
+                        chance -= game.events.filter(e => e.type === 'bomb').length * 10;
+                        chance = Math.max(5, Math.min(92, chance));
+
+                        const roll = Math.random() * 100;
+                        if (roll < chance) {
+                            result = 'win';
+                        } else if (roll < chance + 20) {
+                            result = 'half';
+                        } else {
+                            result = 'crash';
+                        }
+                    } else {
+                        // Нет авианосца — падение
+                        result = 'crash';
+                    }
+                    finishGame(result);
+                }
+            }
+        }
+
+        // Если самолёт улетел слишком далеко
+        if (game.planeX > W + 30 && !game.landingPhase) {
+            game.landingPhase = true;
+        }
+
+        updateDisplay();
+    }
+
+    draw();
+    game.animId = requestAnimationFrame(gameLoop);
+}
+
+// Polyfill roundRect
+if (!CanvasRenderingContext2D.prototype.roundRect) {
+    CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
+        if (r > w/2) r = w/2;
+        if (r > h/2) r = h/2;
+        this.moveTo(x + r, y);
+        this.lineTo(x + w - r, y);
+        this.quadraticCurveTo(x + w, y, x + w, y + r);
+        this.lineTo(x + w, y + h - r);
+        this.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+        this.lineTo(x + r, y + h);
+        this.quadraticCurveTo(x, y + h, x, y + h - r);
+        this.lineTo(x, y + r);
+        this.quadraticCurveTo(x, y, x + r, y);
+        this.closePath();
+        return this;
+    };
+}
+
+init();
+window.addEventListener('beforeunload', () => {
+    if (game.animId) cancelAnimationFrame(game.animId);
+});
+</script>
+</body>
+</html>
