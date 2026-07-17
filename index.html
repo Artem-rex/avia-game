@@ -1,0 +1,1283 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <title>📈 Биржевой Трейдер</title>
+    <style>
+        /* ===== ТЕМЫ ===== */
+        :root {
+            --bg: #0a0a1a;
+            --container: #0f1a2e;
+            --border: rgba(100,200,255,0.08);
+            --text: #ffffff;
+            --text-secondary: #667799;
+            --card-bg: rgba(255,255,255,0.03);
+            --card-border: rgba(255,255,255,0.06);
+            --shadow: rgba(0,0,0,0.8);
+            --modal-bg: #0f1a2e;
+            --input-bg: rgba(0,0,0,0.3);
+            --scrollbar: rgba(100,200,255,0.1);
+            --green: #00ff88;
+            --red: #ff4455;
+            --yellow: #ffcc00;
+        }
+
+        .theme-light {
+            --bg: #f0f2f5;
+            --container: #ffffff;
+            --border: rgba(0,0,0,0.08);
+            --text: #1a1a2e;
+            --text-secondary: #667799;
+            --card-bg: rgba(0,0,0,0.02);
+            --card-border: rgba(0,0,0,0.06);
+            --shadow: rgba(0,0,0,0.15);
+            --modal-bg: #ffffff;
+            --input-bg: rgba(0,0,0,0.05);
+            --scrollbar: rgba(0,0,0,0.1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: var(--bg);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            color: var(--text);
+            padding: 10px;
+            touch-action: manipulation;
+            transition: background 0.3s, color 0.3s;
+        }
+        .game-container {
+            background: var(--container);
+            border-radius: 16px;
+            padding: 15px;
+            max-width: 480px;
+            width: 100%;
+            border: 1px solid var(--border);
+            box-shadow: 0 10px 40px var(--shadow);
+            max-height: 98vh;
+            overflow-y: auto;
+            transition: background 0.3s;
+        }
+        .game-container::-webkit-scrollbar { width: 3px; }
+        .game-container::-webkit-scrollbar-thumb { background: var(--scrollbar); border-radius: 2px; }
+
+        .header {
+            text-align: center;
+            padding: 8px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 12px;
+            position: sticky;
+            top: 0;
+            background: var(--container);
+            z-index: 10;
+            padding-top: 4px;
+            transition: background 0.3s;
+        }
+        .header h1 {
+            font-size: 22px;
+            background: linear-gradient(135deg, #00d4ff, #0088ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 2px;
+        }
+        .header .subtitle {
+            font-size: 11px;
+            color: var(--text-secondary);
+            -webkit-text-fill-color: var(--text-secondary);
+        }
+
+        /* ---- ВЕРХНЯЯ ПАНЕЛЬ: Баланс + Кнопки ---- */
+        .top-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin-top: 6px;
+            flex-wrap: wrap;
+        }
+        .balance {
+            flex: 1;
+            background: rgba(0,255,100,0.06);
+            border: 1px solid rgba(0,255,100,0.1);
+            border-radius: 10px;
+            padding: 8px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            min-width: 120px;
+        }
+        .balance .label { font-size: 12px; color: var(--text-secondary); }
+        .balance .value { font-size: 20px; font-weight: bold; color: var(--green); }
+        .balance .value.red { color: var(--red); }
+
+        .top-buttons {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .top-buttons button {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            padding: 6px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: 0.15s;
+            white-space: nowrap;
+        }
+        .top-buttons button:hover {
+            background: rgba(255,255,255,0.1);
+            color: var(--text);
+        }
+        .top-buttons button:active { transform: scale(0.95); }
+        .top-buttons button.active {
+            background: rgba(0,200,255,0.15);
+            color: #00d4ff;
+            border-color: rgba(0,200,255,0.2);
+        }
+
+        /* ---- СТАТИСТИКА ---- */
+        .stats {
+            display: flex;
+            gap: 8px;
+            margin: 6px 0 10px 0;
+            flex-wrap: wrap;
+        }
+        .stats .stat-item {
+            flex: 1;
+            min-width: 60px;
+            background: var(--card-bg);
+            border-radius: 8px;
+            padding: 6px 10px;
+            text-align: center;
+            border: 1px solid var(--card-border);
+        }
+        .stats .stat-item .label { font-size: 9px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
+        .stats .stat-item .value { font-size: 14px; font-weight: bold; }
+        .stats .stat-item .value.green { color: var(--green); }
+        .stats .stat-item .value.red { color: var(--red); }
+
+        /* ---- ТАБЫ (вкладки) ---- */
+        .tabs {
+            display: flex;
+            gap: 4px;
+            margin: 8px 0 10px 0;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 6px;
+            flex-wrap: wrap;
+        }
+        .tabs button {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            padding: 6px 14px;
+            border-radius: 8px 8px 0 0;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: 0.15s;
+            border-bottom: 2px solid transparent;
+        }
+        .tabs button:hover { color: var(--text); }
+        .tabs button.active {
+            color: #00d4ff;
+            border-bottom-color: #00d4ff;
+        }
+
+        /* ---- СПИСОК АКТИВОВ ---- */
+        .assets-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin: 6px 0;
+            max-height: 340px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+        .assets-grid::-webkit-scrollbar { width: 3px; }
+        .assets-grid::-webkit-scrollbar-thumb { background: var(--scrollbar); border-radius: 2px; }
+
+        .asset-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 10px 14px;
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .asset-card:active { transform: scale(0.98); }
+        .asset-card .icon { font-size: 28px; width: 40px; text-align: center; }
+        .asset-card .info { flex: 1; min-width: 0; }
+        .asset-card .info .name { font-size: 14px; font-weight: bold; }
+        .asset-card .info .holdings { font-size: 10px; color: var(--text-secondary); }
+        .asset-card .price-info { text-align: right; min-width: 80px; }
+        .asset-card .price-info .price { font-size: 16px; font-weight: bold; }
+        .asset-card .price-info .change { font-size: 12px; font-weight: bold; }
+        .asset-card .price-info .change.up { color: var(--green); }
+        .asset-card .price-info .change.down { color: var(--red); }
+        .asset-card .mini-chart { width: 50px; height: 30px; margin-left: 8px; }
+
+        /* ---- МОДАЛЬНОЕ ОКНО ---- */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal {
+            background: var(--modal-bg);
+            border-radius: 16px;
+            padding: 20px;
+            max-width: 420px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            box-shadow: 0 20px 60px var(--shadow);
+            animation: modalIn 0.3s ease;
+            transition: background 0.3s;
+        }
+        @keyframes modalIn {
+            from { transform: scale(0.9) translateY(20px); opacity: 0; }
+            to { transform: scale(1) translateY(0); opacity: 1; }
+        }
+        .modal .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .modal .modal-header h2 { font-size: 20px; display: flex; align-items: center; gap: 8px; }
+        .modal .modal-header .close {
+            background: none; border: none;
+            color: var(--text-secondary);
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0 8px;
+        }
+        .modal .modal-header .close:hover { color: var(--text); }
+
+        .modal .chart-container {
+            background: var(--input-bg);
+            border-radius: 10px;
+            padding: 10px;
+            margin: 8px 0;
+            position: relative;
+            height: 180px;
+        }
+        .modal .chart-container canvas { width: 100%; height: 100%; }
+
+        .modal .price-info {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 4px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 8px;
+        }
+        .modal .price-info .current-price { font-size: 24px; font-weight: bold; }
+        .modal .price-info .current-change { font-size: 18px; font-weight: bold; }
+        .modal .price-info .current-change.up { color: var(--green); }
+        .modal .price-info .current-change.down { color: var(--red); }
+
+        .modal .holdings-info {
+            font-size: 13px;
+            color: var(--text-secondary);
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .modal .holdings-info span { color: var(--text); font-weight: bold; }
+
+        .modal .modal-input {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--input-bg);
+            border-radius: 10px;
+            padding: 4px;
+            margin: 8px 0;
+        }
+        .modal .modal-input button {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--card-border);
+            color: var(--text-secondary);
+            padding: 8px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+            transition: 0.15s;
+            min-width: 40px;
+        }
+        .modal .modal-input button:active { transform: scale(0.9); }
+        .modal .modal-input button:hover { background: rgba(255,255,255,0.08); color: var(--text); }
+        .modal .modal-input input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--text);
+            font-size: 20px;
+            font-weight: bold;
+            text-align: center;
+            padding: 8px;
+            outline: none;
+            width: 80px;
+        }
+        .modal .modal-input input::-webkit-outer-spin-button,
+        .modal .modal-input input::-webkit-inner-spin-button { -webkit-appearance: none; }
+        .modal .modal-input input[type=number] { -moz-appearance: textfield; }
+
+        .modal .quick-amounts {
+            display: flex;
+            gap: 6px;
+            justify-content: center;
+            margin: 6px 0;
+            flex-wrap: wrap;
+        }
+        .modal .quick-amounts button {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            color: var(--text-secondary);
+            padding: 4px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 11px;
+            transition: 0.15s;
+        }
+        .modal .quick-amounts button:active { transform: scale(0.9); }
+        .modal .quick-amounts button:hover { background: rgba(255,255,255,0.08); color: var(--text); }
+
+        .modal .total-cost {
+            text-align: center;
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin: 6px 0;
+        }
+        .modal .total-cost span { color: var(--yellow); font-weight: bold; }
+
+        .modal .modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .modal .modal-actions button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.15s;
+            letter-spacing: 0.5px;
+        }
+        .modal .modal-actions button:active { transform: scale(0.94); }
+        .modal .modal-actions .btn-buy {
+            background: linear-gradient(135deg, #00b894, #00a86b);
+            color: white;
+        }
+        .modal .modal-actions .btn-buy:hover { box-shadow: 0 4px 20px rgba(0,200,100,0.2); }
+        .modal .modal-actions .btn-sell {
+            background: linear-gradient(135deg, #e17055, #d63031);
+            color: white;
+        }
+        .modal .modal-actions .btn-sell:hover { box-shadow: 0 4px 20px rgba(225,112,85,0.2); }
+        .modal .modal-actions .btn-buy:disabled,
+        .modal .modal-actions .btn-sell:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+        .modal .modal-actions .btn-buy:disabled:hover,
+        .modal .modal-actions .btn-sell:disabled:hover { box-shadow: none; }
+
+        .message {
+            text-align: center;
+            padding: 6px 10px;
+            border-radius: 8px;
+            margin: 6px 0;
+            font-weight: bold;
+            font-size: 12px;
+            min-height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid transparent;
+        }
+        .message.success { background: rgba(0,255,100,0.08); color: var(--green); border-color: rgba(0,255,100,0.1); }
+        .message.danger { background: rgba(255,50,50,0.08); color: var(--red); border-color: rgba(255,50,50,0.1); }
+        .message.info { background: rgba(100,200,255,0.04); color: #66d9ff; border-color: rgba(100,200,255,0.05); }
+        .message.warning { background: rgba(255,200,0,0.04); color: var(--yellow); border-color: rgba(255,200,0,0.06); }
+
+        .history {
+            max-height: 80px;
+            overflow-y: auto;
+            margin-top: 6px;
+            padding: 6px 10px;
+            background: var(--input-bg);
+            border-radius: 8px;
+            font-size: 11px;
+            border: 1px solid var(--border);
+        }
+        .history-item {
+            padding: 2px 0;
+            border-bottom: 1px solid var(--card-border);
+            display: flex;
+            justify-content: space-between;
+        }
+        .history-item .win { color: var(--green); }
+        .history-item .lose { color: var(--red); }
+
+        .bottom-buttons {
+            display: flex;
+            gap: 6px;
+            margin-top: 8px;
+            flex-wrap: wrap;
+        }
+        .bottom-buttons button {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--card-bg);
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 12px;
+            transition: 0.15s;
+            min-width: 60px;
+        }
+        .bottom-buttons button:hover { background: rgba(255,255,255,0.05); color: var(--text); }
+        .bottom-buttons button:active { transform: scale(0.95); }
+        .bottom-buttons button.danger { color: var(--red); border-color: rgba(255,50,50,0.15); }
+        .bottom-buttons button.danger:hover { background: rgba(255,50,50,0.08); }
+
+        @media (max-width: 450px) {
+            .game-container { padding: 10px; }
+            .modal { padding: 16px; }
+            .asset-card { padding: 8px 10px; gap: 8px; }
+            .asset-card .icon { font-size: 22px; width: 32px; }
+            .modal .chart-container { height: 150px; }
+            .stats .stat-item .value { font-size: 12px; }
+            .balance .value { font-size: 17px; }
+            .top-buttons button { font-size: 11px; padding: 4px 8px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="game-container" id="app">
+    <!-- ===== ШАПКА ===== -->
+    <div class="header">
+        <h1>📈 БИРЖЕВОЙ ТРЕЙДЕР</h1>
+        <div class="subtitle">Покупай акции и криптовалюту</div>
+        <div class="top-row">
+            <div class="balance">
+                <span class="label">💰 Баланс</span>
+                <span class="value" id="balanceDisplay">1000.00</span>
+            </div>
+            <div class="top-buttons">
+                <button id="themeBtn" onclick="toggleTheme()">🌓</button>
+                <button onclick="openLoanModal()">🏦 Кредит</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== СТАТИСТИКА ===== -->
+    <div class="stats">
+        <div class="stat-item"><div class="label">Инвестировано</div><div class="value green" id="investedDisplay">0.00</div></div>
+        <div class="stat-item"><div class="label">Портфель</div><div class="value" id="portfolioDisplay">0.00</div></div>
+        <div class="stat-item"><div class="label">Прибыль</div><div class="value green" id="profitDisplay">0.00</div></div>
+        <div class="stat-item"><div class="label">Долг</div><div class="value red" id="debtDisplay">0.00</div></div>
+    </div>
+
+    <!-- ===== ТАБЫ ===== -->
+    <div class="tabs" id="tabs">
+        <button class="active" data-tab="all">📊 Все</button>
+        <button data-tab="crypto">₿ Крипта</button>
+        <button data-tab="stocks">📈 Акции</button>
+        <button data-tab="currency">💱 Валюты</button>
+    </div>
+
+    <!-- ===== СПИСОК АКТИВОВ ===== -->
+    <div class="assets-grid" id="assetsGrid"></div>
+
+    <!-- ===== СООБЩЕНИЯ ===== -->
+    <div class="message info" id="messageDisplay">💡 Выбери актив для просмотра графика</div>
+
+    <!-- ===== ИСТОРИЯ ===== -->
+    <div class="history" id="historyDisplay">
+        <div style="color:var(--text-secondary); text-align:center; font-size:11px;">📋 История сделок</div>
+    </div>
+
+    <!-- ===== НИЖНИЕ КНОПКИ ===== -->
+    <div class="bottom-buttons">
+        <button onclick="resetGame()">🔄 Сброс</button>
+        <button onclick="openLoanModal()">🏦 Кредит</button>
+        <button onclick="toggleTheme()">🌓 Тема</button>
+    </div>
+</div>
+
+<!-- ===== МОДАЛКА АКТИВА ===== -->
+<div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+        <div class="modal-header">
+            <h2 id="modalTitle">📊 Актив</h2>
+            <button class="close" onclick="closeModal()">✕</button>
+        </div>
+        <div class="price-info">
+            <div><div style="font-size:12px; color:var(--text-secondary);">Текущая цена</div><div class="current-price" id="modalPrice">0.00</div></div>
+            <div style="text-align:right;"><div style="font-size:12px; color:var(--text-secondary);">Изменение</div><div class="current-change" id="modalChange">+0.00%</div></div>
+        </div>
+        <div class="chart-container"><canvas id="chartCanvas"></canvas></div>
+        <div class="holdings-info">📦 У вас: <span id="modalHoldings">0</span> шт. на сумму <span id="modalHoldingsValue">0.00</span></div>
+        <div class="modal-input">
+            <button onclick="changeAmount(-1)">−</button>
+            <input type="number" id="modalAmount" value="1" min="0.01" step="0.01">
+            <button onclick="changeAmount(1)">+</button>
+        </div>
+        <div class="quick-amounts">
+            <button onclick="setQuickAmount(0.1)">0.1</button>
+            <button onclick="setQuickAmount(0.5)">0.5</button>
+            <button onclick="setQuickAmount(1)">1</button>
+            <button onclick="setQuickAmount(5)">5</button>
+            <button onclick="setQuickAmount(10)">10</button>
+            <button onclick="setMaxAmount()">Макс</button>
+        </div>
+        <div class="total-cost">Стоимость: <span id="modalTotalCost">0.00</span></div>
+        <div class="modal-actions">
+            <button class="btn-buy" id="buyBtn" onclick="buyAsset()">📈 КУПИТЬ</button>
+            <button class="btn-sell" id="sellBtn" onclick="sellAsset()">📉 ПРОДАТЬ</button>
+        </div>
+    </div>
+</div>
+
+<!-- ===== МОДАЛКА КРЕДИТА ===== -->
+<div class="modal-overlay" id="loanModalOverlay">
+    <div class="modal">
+        <div class="modal-header">
+            <h2>🏦 Кредит</h2>
+            <button class="close" onclick="closeLoanModal()">✕</button>
+        </div>
+        <div style="text-align:center; padding:10px 0;">
+            <div style="font-size:14px; color:var(--text-secondary);">Текущий долг</div>
+            <div style="font-size:28px; font-weight:bold; color:var(--red);" id="loanDebtDisplay">0.00</div>
+            <div style="font-size:12px; color:var(--text-secondary); margin-top:4px;">Процентная ставка: 5%</div>
+        </div>
+        <div class="modal-input">
+            <button onclick="changeLoanAmount(-10)">−</button>
+            <input type="number" id="loanAmount" value="100" min="10" step="10">
+            <button onclick="changeLoanAmount(10)">+</button>
+        </div>
+        <div class="quick-amounts">
+            <button onclick="setLoanAmount(50)">50</button>
+            <button onclick="setLoanAmount(100)">100</button>
+            <button onclick="setLoanAmount(500)">500</button>
+            <button onclick="setLoanAmount(1000)">1000</button>
+        </div>
+        <div class="total-cost" style="margin-top:6px;">
+            К выдаче: <span id="loanTotal">100.00</span> (с учётом 5% комиссии)
+        </div>
+        <div class="modal-actions">
+            <button class="btn-buy" onclick="takeLoan()" style="flex:1;">✅ ВЗЯТЬ КРЕДИТ</button>
+            <button class="btn-sell" onclick="repayLoan()" style="flex:1;">💰 ПОГАСИТЬ</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// ============================================================
+//  📈 БИРЖЕВОЙ ТРЕЙДЕР v3.0
+//  • Обновление цен — каждые 10 секунд
+//  • Новые активы: Сбербанк, Яндекс, Нефть, McDonald's, Roblox, Steam
+//  • Вкладки: Крипта / Акции / Валюты / Все
+//  • Смена темы: тёмная / светлая
+//  • Кредиты с процентами
+// ============================================================
+
+// ---------- АКТИВЫ ----------
+const ASSETS = [
+    // Криптовалюты
+    { id: 'btc', icon: '₿', name: 'Bitcoin', color: '#f7931a', minPrice: 40000, maxPrice: 70000, type: 'crypto' },
+    { id: 'eth', icon: '⟠', name: 'Ethereum', color: '#627eea', minPrice: 2000, maxPrice: 4000, type: 'crypto' },
+    { id: 'sol', icon: '◎', name: 'Solana', color: '#9945ff', minPrice: 80, maxPrice: 200, type: 'crypto' },
+    { id: 'not', icon: '🪙', name: 'Notcoin', color: '#ff6b35', minPrice: 0.005, maxPrice: 0.05, type: 'crypto' },
+    // Акции
+    { id: 'aapl', icon: '🍎', name: 'Apple', color: '#555555', minPrice: 150, maxPrice: 250, type: 'stock' },
+    { id: 'googl', icon: '🔵', name: 'Google', color: '#4285f4', minPrice: 120, maxPrice: 200, type: 'stock' },
+    { id: 'tsla', icon: '🚗', name: 'Tesla', color: '#cc0000', minPrice: 200, maxPrice: 400, type: 'stock' },
+    { id: 'samsung', icon: '📱', name: 'Samsung', color: '#1428a0', minPrice: 50, maxPrice: 100, type: 'stock' },
+    { id: 'sber', icon: '🏦', name: 'Сбербанк', color: '#2d8a4e', minPrice: 200, maxPrice: 350, type: 'stock' },
+    { id: 'yandex', icon: '💻', name: 'Яндекс', color: '#ffcc00', minPrice: 3000, maxPrice: 5000, type: 'stock' },
+    { id: 'oil', icon: '🛢️', name: 'Нефть', color: '#2d2d2d', minPrice: 60, maxPrice: 120, type: 'stock' },
+    { id: 'mcd', icon: '🍔', name: "McDonald's", color: '#da291c', minPrice: 200, maxPrice: 350, type: 'stock' },
+    { id: 'roblox', icon: '🎮', name: 'Roblox', color: '#000000', minPrice: 30, maxPrice: 80, type: 'stock' },
+    { id: 'steam', icon: '🎯', name: 'Steam', color: '#1b2838', minPrice: 100, maxPrice: 200, type: 'stock' },
+    // Валюты
+    { id: 'eur', icon: '💶', name: 'EUR/USD', color: '#0052b4', minPrice: 1.05, maxPrice: 1.15, type: 'currency' },
+    { id: 'gbp', icon: '💷', name: 'GBP/USD', color: '#d00000', minPrice: 1.20, maxPrice: 1.35, type: 'currency' }
+];
+
+// ---------- СОСТОЯНИЕ ----------
+let game = {
+    balance: 1000.0,
+    holdings: {},
+    prices: {},
+    priceHistory: {},
+    history: [],
+    selectedAsset: null,
+    totalInvested: 0,
+    debt: 0,
+    theme: 'dark',
+    currentTab: 'all'
+};
+
+// ---------- ИНИЦИАЛИЗАЦИЯ ----------
+function init() {
+    loadGame();
+    initPrices();
+    applyTheme();
+    renderAssets();
+    updateDisplay();
+    updateHistory();
+    updateStats();
+    showMessage('💡 Выбери актив для просмотра графика', 'info');
+    startPriceUpdates();
+    setupTabs();
+}
+
+function initPrices() {
+    ASSETS.forEach(a => {
+        if (!game.prices[a.id]) {
+            const price = a.minPrice + Math.random() * (a.maxPrice - a.minPrice);
+            game.prices[a.id] = Math.round(price * 100) / 100;
+        }
+        if (!game.priceHistory[a.id]) {
+            game.priceHistory[a.id] = [];
+            for (let i = 0; i < 30; i++) {
+                const p = a.minPrice + Math.random() * (a.maxPrice - a.minPrice);
+                game.priceHistory[a.id].push(Math.round(p * 100) / 100);
+            }
+            game.priceHistory[a.id][29] = game.prices[a.id];
+        }
+        if (!game.holdings[a.id]) {
+            game.holdings[a.id] = 0;
+        }
+    });
+    if (!game.totalInvested) game.totalInvested = 0;
+    if (!game.debt) game.debt = 0;
+}
+
+// ---------- СОХРАНЕНИЕ ----------
+function saveGame() {
+    try {
+        localStorage.setItem('trader_balance', game.balance);
+        localStorage.setItem('trader_holdings', JSON.stringify(game.holdings));
+        localStorage.setItem('trader_prices', JSON.stringify(game.prices));
+        localStorage.setItem('trader_history', JSON.stringify(game.history));
+        localStorage.setItem('trader_price_history', JSON.stringify(game.priceHistory));
+        localStorage.setItem('trader_invested', game.totalInvested);
+        localStorage.setItem('trader_debt', game.debt);
+        localStorage.setItem('trader_theme', game.theme);
+    } catch(e) {}
+}
+
+function loadGame() {
+    try {
+        const balance = localStorage.getItem('trader_balance');
+        if (balance !== null) game.balance = parseFloat(balance);
+        const holdings = localStorage.getItem('trader_holdings');
+        if (holdings !== null) game.holdings = JSON.parse(holdings);
+        const prices = localStorage.getItem('trader_prices');
+        if (prices !== null) game.prices = JSON.parse(prices);
+        const history = localStorage.getItem('trader_history');
+        if (history !== null) game.history = JSON.parse(history);
+        const priceHistory = localStorage.getItem('trader_price_history');
+        if (priceHistory !== null) game.priceHistory = JSON.parse(priceHistory);
+        const invested = localStorage.getItem('trader_invested');
+        if (invested !== null) game.totalInvested = parseFloat(invested);
+        const debt = localStorage.getItem('trader_debt');
+        if (debt !== null) game.debt = parseFloat(debt);
+        const theme = localStorage.getItem('trader_theme');
+        if (theme !== null) game.theme = theme;
+    } catch(e) {}
+}
+
+// ---------- ОБНОВЛЕНИЕ ЦЕН (каждые 10 секунд) ----------
+let priceUpdateInterval = null;
+
+function startPriceUpdates() {
+    priceUpdateInterval = setInterval(() => {
+        updatePrices();
+        renderAssets();
+        updateDisplay();
+        updateStats();
+        saveGame();
+        if (document.getElementById('modalOverlay').classList.contains('active') && game.selectedAsset) {
+            updateModal(game.selectedAsset);
+        }
+    }, 10000); // ← 10 секунд!
+}
+
+function updatePrices() {
+    ASSETS.forEach(a => {
+        const currentPrice = game.prices[a.id];
+        const change = (Math.random() - 0.5) * 0.04;
+        let newPrice = currentPrice * (1 + change);
+        newPrice = Math.max(a.minPrice * 0.7, Math.min(a.maxPrice * 1.3, newPrice));
+        newPrice = Math.round(newPrice * 100) / 100;
+        game.prices[a.id] = newPrice;
+
+        if (!game.priceHistory[a.id]) game.priceHistory[a.id] = [];
+        game.priceHistory[a.id].push(newPrice);
+        if (game.priceHistory[a.id].length > 50) game.priceHistory[a.id].shift();
+    });
+}
+
+// ---------- ТАБЫ ----------
+function setupTabs() {
+    document.querySelectorAll('.tabs button').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.tabs button').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            game.currentTab = this.dataset.tab;
+            renderAssets();
+        });
+    });
+}
+
+function getFilteredAssets() {
+    const tab = game.currentTab;
+    if (tab === 'all') return ASSETS;
+    if (tab === 'crypto') return ASSETS.filter(a => a.type === 'crypto');
+    if (tab === 'stocks') return ASSETS.filter(a => a.type === 'stock');
+    if (tab === 'currency') return ASSETS.filter(a => a.type === 'currency');
+    return ASSETS;
+}
+
+// ---------- РЕНДЕРИНГ ----------
+function renderAssets() {
+    const grid = document.getElementById('assetsGrid');
+    grid.innerHTML = '';
+
+    const items = getFilteredAssets();
+    const typeLabels = {
+        'crypto': '🔄 Криптовалюты',
+        'stock': '📈 Акции',
+        'currency': '💱 Валюты'
+    };
+
+    let currentType = '';
+    items.forEach(a => {
+        if (a.type !== currentType) {
+            currentType = a.type;
+            const header = document.createElement('div');
+            header.style.cssText = 'color:var(--text-secondary); font-size:11px; padding:8px 4px 2px 4px; border-bottom:1px solid var(--border); text-transform:uppercase; letter-spacing:1px;';
+            header.textContent = typeLabels[a.type] || '📊 Активы';
+            grid.appendChild(header);
+        }
+
+        const price = game.prices[a.id];
+        const holdings = game.holdings[a.id] || 0;
+        const history = game.priceHistory[a.id] || [price];
+        const oldPrice = history.length > 1 ? history[history.length - 2] : price;
+        const change = oldPrice !== 0 ? ((price - oldPrice) / oldPrice * 100) : 0;
+        const changeClass = change >= 0 ? 'up' : 'down';
+        const changeSymbol = change >= 0 ? '+' : '';
+
+        const miniData = history.slice(-15);
+        const minVal = Math.min(...miniData);
+        const maxVal = Math.max(...miniData);
+        const range = maxVal - minVal || 1;
+        const points = miniData.map((v, i) => ({
+            x: (i / (miniData.length - 1)) * 50,
+            y: 30 - ((v - minVal) / range) * 28
+        }));
+
+        const card = document.createElement('div');
+        card.className = 'asset-card';
+        card.onclick = () => openModal(a.id);
+
+        const miniChart = document.createElement('canvas');
+        miniChart.className = 'mini-chart';
+        miniChart.width = 50;
+        miniChart.height = 30;
+        const mctx = miniChart.getContext('2d');
+        mctx.clearRect(0, 0, 50, 30);
+
+        if (points.length > 1) {
+            mctx.beginPath();
+            mctx.strokeStyle = change >= 0 ? '#00ff88' : '#ff4455';
+            mctx.lineWidth = 1.5;
+            mctx.moveTo(points[0].x, points[0].y);
+            for (let i = 1; i < points.length; i++) {
+                mctx.lineTo(points[i].x, points[i].y);
+            }
+            mctx.stroke();
+        }
+
+        const holdingsValue = holdings * price;
+
+        card.innerHTML = `
+            <div class="icon">${a.icon}</div>
+            <div class="info">
+                <div class="name" style="color:${a.color}">${a.name}</div>
+                <div class="holdings">${holdings > 0 ? `📦 ${holdings.toFixed(2)} шт. • $${holdingsValue.toFixed(2)}` : 'Нет в портфеле'}</div>
+            </div>
+            <div class="price-info">
+                <div class="price" style="color:${a.color}">$${price.toFixed(2)}</div>
+                <div class="change ${changeClass}">${changeSymbol}${change.toFixed(2)}%</div>
+            </div>
+        `;
+
+        const infoDiv = card.querySelector('.price-info');
+        infoDiv.appendChild(miniChart);
+
+        grid.appendChild(card);
+    });
+}
+
+// ---------- ОБНОВЛЕНИЕ ДИСПЛЕЯ ----------
+function updateDisplay() {
+    document.getElementById('balanceDisplay').textContent = game.balance.toFixed(2);
+    const balanceEl = document.getElementById('balanceDisplay');
+    balanceEl.className = 'value' + (game.balance < 100 ? ' red' : '');
+    document.getElementById('debtDisplay').textContent = game.debt.toFixed(2);
+}
+
+function updateStats() {
+    let portfolioValue = 0;
+    ASSETS.forEach(a => {
+        const holdings = game.holdings[a.id] || 0;
+        portfolioValue += holdings * game.prices[a.id];
+    });
+
+    document.getElementById('investedDisplay').textContent = game.totalInvested.toFixed(2);
+    document.getElementById('portfolioDisplay').textContent = portfolioValue.toFixed(2);
+    const profit = portfolioValue - game.totalInvested;
+    const profitEl = document.getElementById('profitDisplay');
+    profitEl.textContent = (profit >= 0 ? '+' : '') + profit.toFixed(2);
+    profitEl.className = 'value ' + (profit >= 0 ? 'green' : 'red');
+}
+
+function updateHistory() {
+    const container = document.getElementById('historyDisplay');
+    if (game.history.length === 0) {
+        container.innerHTML = '<div style="color:var(--text-secondary); text-align:center; font-size:11px;">📋 История сделок</div>';
+        return;
+    }
+    let html = '<div style="color:var(--text-secondary); font-size:10px; margin-bottom:4px;">📋 Последние сделки:</div>';
+    game.history.slice(0, 10).forEach(h => {
+        const icon = h.type === 'buy' ? '📈' : '📉';
+        const cls = h.type === 'buy' ? 'win' : 'lose';
+        const sign = h.type === 'buy' ? '-' : '+';
+        const action = h.type === 'buy' ? 'Покупка' : 'Продажа';
+        html += `<div class="history-item">
+            <span>${icon} ${action} ${h.asset} ${h.amount.toFixed(2)} шт. по $${h.price.toFixed(2)}</span>
+            <span class="${cls}">${sign}$${h.total.toFixed(2)}</span>
+        </div>`;
+    });
+    container.innerHTML = html;
+}
+
+function showMessage(text, type = 'info') {
+    const el = document.getElementById('messageDisplay');
+    el.textContent = text;
+    el.className = 'message ' + type;
+}
+
+// ---------- ГРАФИК ----------
+function drawChart(assetId) {
+    const canvas = document.getElementById('chartCanvas');
+    const ctx = canvas.getContext('2d');
+    const rect = canvas.parentElement.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = (rect.width - 20) * dpr;
+    canvas.height = (rect.height - 20) * dpr;
+    canvas.style.width = (rect.width - 20) + 'px';
+    canvas.style.height = (rect.height - 20) + 'px';
+    ctx.scale(dpr, dpr);
+
+    const W = canvas.width / dpr;
+    const H = canvas.height / dpr;
+    const a = ASSETS.find(x => x.id === assetId);
+    const data = game.priceHistory[assetId] || [game.prices[assetId]];
+    const price = game.prices[assetId];
+
+    ctx.clearRect(0, 0, W, H);
+
+    if (data.length < 2) {
+        ctx.fillStyle = 'var(--text-secondary)';
+        ctx.font = '14px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('Недостаточно данных', W/2, H/2);
+        return;
+    }
+
+    const minVal = Math.min(...data) * 0.998;
+    const maxVal = Math.max(...data) * 1.002;
+    const range = maxVal - minVal || 1;
+    const padding = { top: 10, bottom: 10, left: 10, right: 10 };
+    const chartW = W - padding.left - padding.right;
+    const chartH = H - padding.top - padding.bottom;
+
+    // Сетка
+    ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+    ctx.lineWidth = 0.5;
+    for (let i = 0; i < 5; i++) {
+        const y = padding.top + (i / 4) * chartH;
+        ctx.beginPath();
+        ctx.moveTo(padding.left, y);
+        ctx.lineTo(W - padding.right, y);
+        ctx.stroke();
+        const val = maxVal - (i / 4) * range;
+        ctx.fillStyle = 'rgba(255,255,255,0.2)';
+        ctx.font = '8px Arial';
+        ctx.textAlign = 'right';
+        ctx.fillText('$' + val.toFixed(a.id === 'not' ? 3 : 0), padding.left - 2, y + 3);
+    }
+
+    const points = data.map((v, i) => ({
+        x: padding.left + (i / (data.length - 1)) * chartW,
+        y: padding.top + chartH - ((v - minVal) / range) * chartH
+    }));
+
+    // Заливка
+    ctx.beginPath();
+    ctx.moveTo(points[0].x, H - padding.bottom);
+    points.forEach(p => ctx.lineTo(p.x, p.y));
+    ctx.lineTo(points[points.length - 1].x, H - padding.bottom);
+    ctx.closePath();
+    const grad = ctx.createLinearGradient(0, padding.top, 0, H - padding.bottom);
+    const isUp = data[data.length - 1] >= data[0];
+    grad.addColorStop(0, isUp ? 'rgba(0,255,136,0.25)' : 'rgba(255,68,85,0.25)');
+    grad.addColorStop(1, 'rgba(0,255,136,0.01)');
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    // Линия
+    ctx.beginPath();
+    ctx.moveTo(points[0].x, points[0].y);
+    for (let i = 1; i < points.length; i++) {
+        ctx.lineTo(points[i].x, points[i].y);
+    }
+    ctx.strokeStyle = isUp ? '#00ff88' : '#ff4455';
+    ctx.lineWidth = 2;
+    ctx.shadowColor = isUp ? 'rgba(0,255,136,0.2)' : 'rgba(255,68,85,0.2)';
+    ctx.shadowBlur = 8;
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    // Текущая цена
+    const lastP = points[points.length - 1];
+    ctx.fillStyle = isUp ? '#00ff88' : '#ff4455';
+    ctx.beginPath();
+    ctx.arc(lastP.x, lastP.y, 4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowColor = isUp ? 'rgba(0,255,136,0.4)' : 'rgba(255,68,85,0.4)';
+    ctx.shadowBlur = 12;
+    ctx.beginPath();
+    ctx.arc(lastP.x, lastP.y, 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    ctx.fillStyle = 'var(--text)';
+    ctx.font = 'bold 11px Arial';
+    ctx.textAlign = 'left';
+    ctx.fillText('$' + price.toFixed(a.id === 'not' ? 3 : 2), lastP.x + 6, lastP.y - 4);
+}
+
+// ---------- МОДАЛЬНОЕ ОКНО ----------
+let selectedAssetId = null;
+
+function openModal(assetId) {
+    selectedAssetId = assetId;
+    game.selectedAsset = assetId;
+    document.getElementById('modalOverlay').classList.add('active');
+    updateModal(assetId);
+}
+
+function updateModal(assetId) {
+    const a = ASSETS.find(x => x.id === assetId);
+    const price = game.prices[assetId];
+    const holdings = game.holdings[assetId] || 0;
+    const history = game.priceHistory[assetId] || [price];
+    const oldPrice = history.length > 1 ? history[history.length - 2] : price;
+    const change = oldPrice !== 0 ? ((price - oldPrice) / oldPrice * 100) : 0;
+    const changeClass = change >= 0 ? 'up' : 'down';
+    const changeSymbol = change >= 0 ? '+' : '';
+    const holdingsValue = holdings * price;
+
+    document.getElementById('modalTitle').innerHTML = `${a.icon} ${a.name} <span style="font-size:12px; color:var(--text-secondary); font-weight:normal;">${a.type === 'crypto' ? 'Крипта' : a.type === 'stock' ? 'Акция' : 'Валюта'}</span>`;
+    document.getElementById('modalPrice').textContent = `$${price.toFixed(assetId === 'not' ? 3 : 2)}`;
+    document.getElementById('modalPrice').style.color = a.color;
+    document.getElementById('modalChange').textContent = `${changeSymbol}${change.toFixed(2)}%`;
+    document.getElementById('modalChange').className = `current-change ${changeClass}`;
+    document.getElementById('modalHoldings').textContent = holdings.toFixed(2);
+    document.getElementById('modalHoldingsValue').textContent = `$${holdingsValue.toFixed(2)}`;
+
+    document.getElementById('modalAmount').value = 1;
+    updateTotalCost();
+    drawChart(assetId);
+
+    const buyBtn = document.getElementById('buyBtn');
+    const sellBtn = document.getElementById('sellBtn');
+    buyBtn.disabled = false;
+    sellBtn.disabled = holdings <= 0;
+}
+
+function closeModal() {
+    document.getElementById('modalOverlay').classList.remove('active');
+}
+
+function changeAmount(delta) {
+    const input = document.getElementById('modalAmount');
+    let val = parseFloat(input.value) || 0;
+    val = Math.max(0.01, Math.round((val + delta) * 100) / 100);
+    input.value = val;
+    updateTotalCost();
+}
+
+function setQuickAmount(val) {
+    document.getElementById('modalAmount').value = val;
+    updateTotalCost();
+}
+
+function setMaxAmount() {
+    const price = game.prices[selectedAssetId];
+    const maxBuy = Math.floor(game.balance / price * 100) / 100;
+    document.getElementById('modalAmount').value = Math.max(0.01, maxBuy);
+    updateTotalCost();
+}
+
+function updateTotalCost() {
+    const amount = parseFloat(document.getElementById('modalAmount').value) || 0;
+    const price = game.prices[selectedAssetId];
+    const total = amount * price;
+    document.getElementById('modalTotalCost').textContent = total.toFixed(2);
+}
+
+// ---------- ПОКУПКА ----------
+function buyAsset() {
+    if (!selectedAssetId) return;
+    const a = ASSETS.find(x => x.id === selectedAssetId);
+    const price = game.prices[selectedAssetId];
+    const amount = parseFloat(document.getElementById('modalAmount').value) || 0;
+    const total = amount * price;
+
+    if (amount <= 0) {
+        showMessage('❌ Введите корректное количество', 'danger');
+        return;
+    }
+    if (total > game.balance) {
+        showMessage('❌ Недостаточно средств!', 'danger');
+        return;
+    }
+
+    game.balance -= total;
+    game.totalInvested += total;
+    game.holdings[selectedAssetId] = (game.holdings[selectedAssetId] || 0) + amount;
+    game.history.unshift({
+        type: 'buy',
+        asset: a.name,
+        amount: amount,
+        price: price,
+        total: total
+    });
+
+    showMessage(`✅ Куплено ${amount.toFixed(2)} ${a.name} за $${total.toFixed(2)}`, 'success');
+    saveGame();
+    updateDisplay();
+    updateHistory();
+    updateStats();
+    renderAssets();
+    updateModal(selectedAssetId);
+}
+
+// ---------- ПРОДАЖА ----------
+function sellAsset() {
+    if (!selectedAssetId) return;
+    const a = ASSETS.find(x => x.id === selectedAssetId);
+    const price = game.prices[selectedAssetId];
+    const amount = parseFloat(document.getElementById('modalAmount').value) || 0;
+    const total = amount * price;
+    const holdings = game.holdings[selectedAssetId] || 0;
+
+    if (amount <= 0) {
+        showMessage('❌ Введите корректное количество', 'danger');
+        return;
+    }
+    if (amount > holdings) {
+        showMessage(`❌ У вас только ${holdings.toFixed(2)} ${a.name}`, 'danger');
+        return;
+    }
+
+    const avgPrice = game.totalInvested / (Object.values(game.holdings).reduce((a,b) => a+b, 0) || 1);
+    const profit = (price - avgPrice) * amount;
+
+    game.balance += total;
+    game.totalInvested -= avgPrice * amount;
+    if (game.totalInvested < 0) game.totalInvested = 0;
+    game.holdings[selectedAssetId] = holdings - amount;
+    if (game.holdings[selectedAssetId] < 0.001) game.holdings[selectedAssetId] = 0;
+
+    game.history.unshift({
+        type: 'sell',
+        asset: a.name,
+        amount: amount,
+        price: price,
+        total: total,
+        profit: profit
+    });
+
+    showMessage(`✅ Продано ${amount.toFixed(2)} ${a.name} за $${total.toFixed(2)} ${profit >= 0 ? '📈 +' : '📉 '}${profit.toFixed(2)}`, 'success');
+    saveGame();
+    updateDisplay();
+    updateHistory();
+    updateStats();
+    renderAssets();
+    updateModal(selectedAssetId);
+}
+
+// ---------- ТЕМА ----------
+function toggleTheme() {
+    if (game.theme === 'dark') {
+        game.theme = 'light';
+        document.body.classList.add('theme-light');
+    } else {
+        game.theme = 'dark';
+        document.body.classList.remove('theme-light');
+    }
+    localStorage.setItem('trader_theme', game.theme);
+    document.getElementById('themeBtn').textContent = game.theme === 'dark' ? '🌓' : '🌞';
+}
+
+function applyTheme() {
+    if (game.theme === 'light') {
+        document.body.classList.add('theme-light');
+        document.getElementById('themeBtn').textContent = '🌞';
+    } else {
+        document.body.classList.remove('theme-light');
+        document.getElementById('themeBtn').textContent = '🌓';
+    }
+}
+
+// ---------- КРЕДИТЫ ----------
+function openLoanModal() {
+    document.getElementById('loanDebtDisplay').textContent = game.debt.toFixed(2);
+    document.getElementById('loanAmount').value = 100;
+    updateLoanTotal();
+    document.getElementById('loanModalOverlay').classList.add('active');
+}
+
+function closeLoanModal() {
+    document.getElementById('loanModalOverlay').classList.remove('active');
+}
+
+function changeLoanAmount(delta) {
+    const input = document.getElementById('loanAmount');
+    let val = parseFloat(input.value) || 0;
+    val = Math.max(10, Math.round((val + delta) / 10) * 10);
+    input.value = val;
+    updateLoanTotal();
+}
+
+function setLoanAmount(val) {
+    document.getElementById('loanAmount').value = val;
+    updateLoanTotal();
+}
+
+function updateLoanTotal() {
+    const amount = parseFloat(document.getElementById('loanAmount').value) || 0;
+    const fee = amount * 0.05;
+    document.getElementById('loanTotal').textContent = (amount - fee).toFixed(2);
+}
+
+function takeLoan() {
+    const amount = parseFloat(document.getElementById('loanAmount').value) || 0;
+    if (amount <= 0) {
+        showMessage('❌ Введите сумму кредита', 'danger');
+        return;
+    }
+    const fee = amount * 0.05;
+    const received = amount - fee;
+    game.balance += received;
+    game.debt += amount;
+    showMessage(`✅ Взят кредит $${amount.toFixed(2)} (получено $${received.toFixed(2)})`, 'success');
+    saveGame();
+    updateDisplay();
+    updateStats();
+    closeLoanModal();
+}
+
+function repayLoan() {
+    if (game.debt <= 0) {
+        showMessage('❌ У вас нет долгов!', 'warning');
+        return;
+    }
+    if (game.balance < game.debt) {
+        showMessage(`❌ Недостаточно средств! Нужно $${game.debt.toFixed(2)}`, 'danger');
+        return;
+    }
+    game.balance -= game.debt;
+    showMessage(`✅ Долг погашен! $${game.debt.toFixed(2)}`, 'success');
+    game.debt = 0;
+    saveGame();
+    updateDisplay();
+    updateStats();
+    closeLoanModal();
+}
+
+// ---------- СБРОС ----------
+function resetGame() {
+    if (confirm('Сбросить прогресс? Баланс станет 1000$, портфель очистится')) {
+        game.balance = 1000;
+        game.holdings = {};
+        game.history = [];
+        game.prices = {};
+        game.priceHistory = {};
+        game.totalInvested = 0;
+        game.debt = 0;
+        initPrices();
+        saveGame();
+        updateDisplay();
+        updateHistory();
+        updateStats();
+        renderAssets();
+        showMessage('🔄 Прогресс сброшен!', 'info');
+        if (document.getElementById('modalOverlay').classList.contains('active')) closeModal();
+        if (document.getElementById('loanModalOverlay').classList.contains('active')) closeLoanModal();
+    }
+}
+
+// ---------- ЗАКРЫТИЕ МОДАЛОК ПО КЛИКУ ВНЕ ----------
+document.getElementById('modalOverlay').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+});
+document.getElementById('loanModalOverlay').addEventListener('click', function(e) {
+    if (e.target === this) closeLoanModal();
+});
+
+// ---------- ПЕРЕРИСОВКА ГРАФИКА ----------
+window.addEventListener('resize', () => {
+    if (document.getElementById('modalOverlay').classList.contains('active') && selectedAssetId) {
+        drawChart(selectedAssetId);
+    }
+});
+
+// ---------- ЗАПУСК ----------
+init();
+</script>
+</body>
+</html>
